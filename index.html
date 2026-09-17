@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Logic Royale</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0b0f17; --bg2:#121826; --card:#161d2d; --line:#26304a;
+  --tx:#e8edf7; --dim:#8b97b0; --acc:#ff8a3d; --acc2:#22d3ee;
+  --ok:#34d399; --bad:#f87171; --warn:#fbbf24;
+  --disp:"Chakra Petch",'Segoe UI Semibold',system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r-common:#7c879b; --r-uncommon:#34d399; --r-rare:#60a5fa;
+  --r-epic:#c084fc; --r-legendary:#fbbf24;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:radial-gradient(1000px 600px at 50% -10%,#1b2640 0%,var(--bg) 60%);
+  color:var(--tx);font:15px/1.55 var(--body);
+  -webkit-font-smoothing:antialiased;min-height:100%;
+}
+h1,h2,.big,.stat .v,.stat .k,.tag,.btn,.kf,.rank,.char b,.mini-l{font-family:var(--disp)}
+#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.wrap{max-width:820px;margin:0 auto;padding-block:16px 48px;padding-inline:16px;position:relative}
+.screen{display:none;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:clamp(28px,7vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h1 .g{background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:18px;font-weight:700;margin:0 0 10px}
+.sub{color:var(--dim);margin-top:8px;max-width:58ch}
+.card{background:rgba(22,29,45,.82);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  border:1px solid var(--line);border-radius:14px;padding:16px}
+.stat{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.mt{margin-top:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{
+  background:linear-gradient(92deg,var(--acc),#ff6a3d);color:#111;border:0;border-radius:11px;
+  padding:13px 20px;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.01em;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--line);font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.chars{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}
+.char{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:13px;cursor:pointer;text-align:left;color:var(--tx);font:inherit}
+.char:hover{border-color:#3d4a70}
+.char.sel{border-color:var(--acc);background:#1d2337}
+.char b{display:block;font-size:15px}
+.char span{color:var(--dim);font-size:12.5px;display:block;margin-top:4px}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:rgba(22,29,45,.82);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.stat .v{font-size:19px;font-weight:800;margin-top:2px}
+.bar{height:8px;background:#0d1220;border-radius:99px;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .3s linear}
+.hp i{background:linear-gradient(90deg,var(--ok),#a3e635)}
+.hp.low i{background:linear-gradient(90deg,var(--bad),var(--acc))}
+.zone{margin-top:12px}
+.zone .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--dim)}
+.zone i{background:linear-gradient(90deg,var(--acc2),#6366f1)}
+.zone.crit i{background:linear-gradient(90deg,var(--bad),var(--acc))}
+.qmeta{display:flex;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin-bottom:10px}
+.tag{background:#1c2338;border:1px solid var(--line);padding:3px 8px;border-radius:99px;letter-spacing:.04em}
+.tag.d1{color:var(--ok)}.tag.d2{color:var(--warn)}.tag.d3{color:var(--bad)}
+.q{font-size:17px;font-weight:600;line-height:1.45;white-space:pre-wrap}
+pre{background:#0d1220;border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+  overflow-x:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;color:#cfe3ff;margin-top:10px}
+.opts{display:grid;gap:8px;margin-top:14px}
+.opt{
+  background:var(--bg2);border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;
+  text-align:left;color:var(--tx);font:inherit;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;
+}
+.opt:hover:not(:disabled){border-color:#3d4a70;background:#1a2134}
+.opt .key{flex:0 0 22px;height:22px;border-radius:6px;background:#26304a;display:grid;place-items:center;
+  font-size:12px;font-weight:800;color:var(--dim)}
+.opt.ok{border-color:var(--ok);background:#12281f}.opt.ok .key{background:var(--ok);color:#06210f}
+.opt.bad{border-color:var(--bad);background:#2a1418}.opt.bad .key{background:var(--bad);color:#2a0d10}
+.opt.gone{opacity:.22;pointer-events:none}
+.opt:disabled{cursor:default}
+.loot{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.item{background:#1c2338;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:12.5px;
+  cursor:pointer;font-weight:600;color:var(--tx);font-family:inherit}
+.item:hover:not(:disabled){border-color:var(--acc)}
+.item:disabled{opacity:.3;cursor:not-allowed}
+.toast{margin-top:12px;border-radius:11px;padding:11px 13px;font-size:13.5px;border:1px solid}
+.toast.ok{background:#11261d;border-color:#1f5c42;color:#9df3c9}
+.toast.bad{background:#2a1418;border-color:#6b2730;color:#ffb4b4}
+.toast.info{background:#141c30;border-color:#2c3a63;color:#bcd0ff}
+.big{font-size:clamp(30px,8vw,52px);font-weight:900;letter-spacing:-.02em}
+.booyah{background:linear-gradient(92deg,#fbbf24,var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.rep{border-top:1px solid var(--line);padding:14px 0}
+.rep .rq{font-weight:600;font-size:14.5px;white-space:pre-wrap}
+.rep .line{font-size:13px;margin-top:6px;color:var(--dim)}
+.rep .line b{color:var(--tx);font-weight:600}
+.rep .why{font-size:13px;margin-top:8px;color:#bcd0ff;background:#121a2c;border-radius:9px;padding:9px 11px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:99px;margin-right:6px}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.foot{color:var(--dim);font-size:12.5px;margin-top:20px;line-height:1.75}
+@media(max-width:520px){.grid3{grid-template-columns:1fr}}
+
+/* ===== battle-royale chrome ===== */
+h1,h2,.big{text-transform:uppercase;letter-spacing:.01em}
+.stat .k,.tag{text-transform:uppercase}
+.btn{clip-path:polygon(0 0,100% 0,calc(100% - 11px) 100%,0 100%);text-transform:uppercase;letter-spacing:.05em}
+.btn.ghost{clip-path:polygon(11px 0,100% 0,100% 100%,0 100%)}
+
+/* corner brackets on panels */
+.card{position:relative}
+.card::before,.card::after{content:"";position:absolute;width:15px;height:15px;
+  border:2px solid var(--acc);opacity:.5;pointer-events:none}
+.card::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.card::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+/* segmented HP / zone bars */
+.bar{position:relative}
+.bar::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(11,15,23,.85) 9px 11px)}
+.hud{grid-template-columns:repeat(auto-fit,minmax(148px,1fr))}
+.stat{position:relative;overflow:hidden}
+.stat .v{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.stat .sm{font-size:12px;color:var(--dim);margin-top:6px;font-family:var(--disp);text-transform:uppercase}
+.stat .sm b{color:var(--tx)}
+.hazard{height:3px;margin-top:10px;
+  background:repeating-linear-gradient(45deg,var(--acc) 0 6px,#0d1220 6px 12px);opacity:.35}
+
+/* loot rarity */
+.item{border-width:1.5px}
+.item[data-r=common]{border-color:var(--r-common)}
+.item[data-r=uncommon]{border-color:var(--r-uncommon)}
+.item[data-r=rare]{border-color:var(--r-rare)}
+.item[data-r=epic]{border-color:var(--r-epic)}
+.item[data-r=legendary]{border-color:var(--r-legendary);box-shadow:0 0 12px rgba(251,191,36,.22)}
+
+/* kill feed */
+#feed{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;
+  width:min(250px,52vw);display:none;flex-direction:column;gap:5px;z-index:40;pointer-events:none}
+#feed.on{display:flex}
+.kf{font-size:11.5px;font-weight:600;line-height:1.35;color:#dce4f4;
+  background:rgba(10,14,24,.82);border-left:3px solid var(--bad);padding:5px 8px;
+  animation:kfin .22s ease both}
+.kf.you{border-left-color:var(--acc);color:#ffd9bd}
+.kf em{font-style:normal;color:var(--dim)}
+@keyframes kfin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+/* minimap */
+#mini{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  width:96px;display:none;z-index:40;pointer-events:none}
+#mini.on{display:block}
+#mini canvas{display:block;width:96px;height:96px;background:rgba(10,14,24,.72);
+  border:1px solid var(--line)}
+.mini-l{font-size:10px;letter-spacing:.14em;color:var(--dim);text-align:center;
+  padding:3px 0;background:rgba(10,14,24,.72);border:1px solid var(--line);border-top:0;
+  text-transform:uppercase}
+@media(max-width:400px){#mini canvas{width:76px;height:76px}#mini{width:76px}}
+
+/* hit flash + shake */
+#hit{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 50%,rgba(255,45,30,0) 42%,rgba(255,45,30,.6) 100%)}
+#hit.go{animation:hitf .5s ease}
+@keyframes hitf{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.shake{animation:shk .34s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shk{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}
+  30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+
+/* drop sequence */
+#seq{position:fixed;inset:0;z-index:60;display:none;place-items:center;text-align:center;
+  background:rgba(6,9,16,.93);padding:20px}
+#seq.on{display:grid}
+#seq .lead{font-family:var(--disp);font-size:13px;letter-spacing:.34em;color:var(--acc2);
+  text-transform:uppercase}
+#seq .cnt{font-family:var(--disp);font-weight:700;font-size:clamp(64px,22vw,150px);line-height:1;
+  margin-top:8px;background:linear-gradient(92deg,var(--acc),#ff5e3d);
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:pop .4s ease}
+#seq .who{color:var(--dim);font-size:13.5px;margin-top:10px}
+@keyframes pop{from{transform:scale(1.5);opacity:0}to{transform:none;opacity:1}}
+.slam{animation:slam .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes slam{0%{transform:scale(2.2);opacity:0}60%{transform:scale(.94)}100%{transform:none;opacity:1}}
+
+.sfx{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:9px;
+  padding:6px 10px;font:600 11.5px var(--disp);cursor:pointer;letter-spacing:.08em;text-transform:uppercase}
+.sfx.on{color:var(--acc);border-color:var(--acc)}
+
+@media (prefers-reduced-motion: reduce){
+  .shake,#seq .cnt,.slam,.kf{animation:none!important}
+  #hit.go{animation-duration:.2s}
+}
+</style>
+</head>
+<body>
+<canvas id="bgfx" aria-hidden="true"></canvas>
+<div id="hit" aria-hidden="true"></div>
+<div id="feed" aria-live="polite"></div>
+<div id="mini" aria-hidden="true"><canvas id="minic" width="192" height="192"></canvas><div class="mini-l" id="minil">Zone 1</div></div>
+<div id="seq" aria-hidden="true"><div>
+  <div class="lead" id="seqlead">Dropping in</div>
+  <div class="cnt" id="seqcnt">3</div>
+  <div class="who" id="seqwho"></div>
+</div></div>
+<div class="wrap">
+
+<section id="home" class="screen on">
+  <h1>LOGIC <span class="g">ROYALE</span></h1>
+  <p class="sub">50 drop in. One survives. Every zone closes on a reasoning problem &mdash; and answering fast is not enough. You must also name <em>why</em> the answer is right.</p>
+
+  <div class="card mt">
+    <h2>Pick your operator</h2>
+    <div class="chars" id="chars"></div>
+  </div>
+
+  <div class="card mt">
+    <h2>Rules of the drop</h2>
+    <div class="foot" style="margin-top:0">
+      &bull; 12 zones. Each zone = 1 problem, and the clock shrinks every round.<br>
+      &bull; Wrong answer &minus;30 HP. Timeout &minus;40 HP. From zone 7 the storm bites 6 HP a round.<br>
+      &bull; Correct answer &rarr; you then pick the <b>key insight</b>. Right insight = 1.6&times; score. Fast guessing wins nothing.<br>
+      &bull; Answer inside 40% of the clock = <b>headshot</b>, takes 2 extra bots out.<br>
+      &bull; Loot drops after clean solves. Last one standing gets BOOYAH.
+    </div>
+  </div>
+
+  <div class="row mt">
+    <button class="btn" id="drop">Drop in</button>
+    <button class="sfx" id="sfx">Sound off</button>
+    <span id="career" class="foot" style="margin-top:0"></span>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="hud">
+    <div class="stat">
+      <div class="k">HP</div><div class="v" id="hpv">100</div>
+      <div class="bar hp" id="hpbar"><i style="width:100%"></i></div>
+    </div>
+    <div class="stat">
+      <div class="k">Survivors</div><div class="v" id="alive">50</div>
+      <div class="sm">Rank <b id="place">#50</b></div>
+    </div>
+    <div class="stat">
+      <div class="k">Score</div><div class="v" id="score">0</div>
+      <div class="sm">Elims <b id="elims">0</b></div>
+    </div>
+  </div>
+
+  <div class="zone" id="zonewrap">
+    <div class="lbl"><span id="zlbl">Zone 1 of 12</span><span id="ztime">60s</span></div>
+    <div class="bar" id="zbar"><i style="width:100%"></i></div>
+  </div>
+
+  <div class="card mt">
+    <div class="qmeta" id="qmeta"></div>
+    <div id="qbody"></div>
+    <div class="opts" id="opts"></div>
+    <div class="loot" id="lootbar"></div>
+    <div id="toast"></div>
+  </div>
+</section>
+
+<section id="result" class="screen">
+  <div class="card">
+    <div class="big" id="verdict"></div>
+    <p class="sub" id="verdictsub"></p>
+    <div class="grid3">
+      <div class="stat"><div class="k">Placement</div><div class="v" id="rplace"></div></div>
+      <div class="stat"><div class="k">Score</div><div class="v" id="rscore"></div></div>
+      <div class="stat"><div class="k">Accuracy</div><div class="v" id="racc"></div></div>
+    </div>
+    <div class="grid3">
+      <div class="stat"><div class="k">Insight hits</div><div class="v" id="rins"></div></div>
+      <div class="stat"><div class="k">Headshots</div><div class="v" id="rhs"></div></div>
+      <div class="stat"><div class="k">Career rank</div><div class="v" id="rrank" style="font-size:15px"></div></div>
+    </div>
+    <div class="row mt"><button class="btn" id="again">DROP AGAIN</button>
+      <button class="btn ghost" id="toreplay">MATCH REPLAY</button></div>
+  </div>
+</section>
+
+<section id="replay" class="screen">
+  <div class="card">
+    <h2>Match replay &mdash; the reasoning, not just the answer</h2>
+    <div id="replaybody"></div>
+    <div class="row mt"><button class="btn" id="again2">DROP AGAIN</button>
+      <button class="btn ghost" id="backres">BACK</button></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- question bank ----------------
+   q      : prompt text
+   code   : optional monospace block
+   opts   : answer choices, a = index of correct one
+   ins    : candidate "key insight" statements, ia = index of the real one
+   why    : full worked explanation shown in the replay
+-------------------------------------------------- */
+var QUESTIONS = [
+{cat:"Number series", d:1,
+ q:"2, 6, 12, 20, 30, ?",
+ opts:["40","42","44","46"], a:1,
+ ins:["The differences run 4, 6, 8, 10 \u2014 so the next gap is 12",
+      "Every term is the previous one doubled, minus a constant",
+      "Each term is a perfect square minus 2"], ia:0,
+ why:"Differences: 4, 6, 8, 10 \u2014 themselves an arithmetic run. Next difference is 12, so 30 + 12 = 42. General term is n(n+1): 1\u00d72, 2\u00d73, 3\u00d74\u2026"},
+
+{cat:"Number series", d:2,
+ q:"3, 7, 15, 31, ?",
+ opts:["47","55","63","61"], a:2,
+ ins:["Each term is 2 \u00d7 previous + 1",
+      "The differences are all prime numbers",
+      "Each term is the sum of the two before it"], ia:0,
+ why:"3\u21927\u219215\u219231 each double and add one. 2\u00d731 + 1 = 63. Equivalently every term is 2\u207f \u2212 1."},
+
+{cat:"Blood relations", d:1,
+ q:"Pointing at a photo, Ravi says: \u201cShe is the daughter of my grandfather\u2019s only son.\u201d How is she related to Ravi?",
+ opts:["His cousin","His sister","His aunt","His niece"], a:1,
+ ins:["\u201cGrandfather\u2019s only son\u201d can only be Ravi\u2019s own father",
+      "\u201cGrandfather\u2019s only son\u201d means Ravi\u2019s uncle",
+      "The photo must be of an older generation"], ia:0,
+ why:"Ravi\u2019s grandfather has exactly one son. Ravi is that son\u2019s child, so the only son is Ravi\u2019s father. That man\u2019s daughter is Ravi\u2019s sister."},
+
+{cat:"Syllogism", d:2,
+ q:"Statements:\n  1. All engineers are problem solvers.\n  2. Some problem solvers are artists.\n\nDoes \u201cSome engineers are artists\u201d follow?",
+ opts:["Yes, it follows","No, it does not follow","Only if all artists are engineers","Cannot be determined without a third statement"], a:1,
+ ins:["The artists that overlap may sit entirely outside the engineer set",
+      "Two \u2018some\u2019 statements can never combine",
+      "The first statement is too weak to use"], ia:0,
+ why:"Engineers form a subset of problem solvers. The artists who overlap problem solvers could all be non-engineer problem solvers. Nothing forces an engineer-artist to exist, so the conclusion does not follow."},
+
+{cat:"Coding\u2013decoding", d:1,
+ q:"If CAT is coded 3120, then DOG is coded:",
+ opts:["4157","41507","4-15-7 only","4167"], a:0,
+ ins:["Each letter becomes its alphabet position, then positions are concatenated",
+      "Each letter shifts forward by one, then converts to a digit",
+      "The letters are summed and written in reverse"], ia:0,
+ why:"C=3, A=1, T=20 concatenates to 3120. D=4, O=15, G=7 concatenates to 4157."},
+
+{cat:"Direction sense", d:1,
+ q:"A man walks 5 km north, turns right and walks 3 km, turns right again and walks 5 km. How far is he from his start?",
+ opts:["3 km","5 km","8 km","13 km"], a:0,
+ ins:["The two 5 km legs point opposite ways and cancel exactly",
+      "All three legs form a right triangle, so use Pythagoras",
+      "Two right turns always return you to the start"], ia:0,
+ why:"North 5, then east 3, then south 5. The north and south legs cancel. Only the 3 km east leg remains, so he is 3 km from the start."},
+
+{cat:"Pseudocode trace", d:1,
+ q:"What does this print?",
+ code:"x = 0\nfor i in 1..4:\n    x = x + i*i\nprint(x)",
+ opts:["10","16","30","20"], a:2,
+ ins:["It accumulates the squares: 1 + 4 + 9 + 16",
+      "It accumulates i and squares the total at the end",
+      "The loop runs 5 times because ranges are inclusive of 0"], ia:0,
+ why:"Each pass adds i\u00b2. 1 + 4 + 9 + 16 = 30."},
+
+{cat:"Debugging", d:2,
+ q:"What is wrong with find_max?",
+ code:"def find_max(a):\n    m = 0\n    for v in a:\n        if v > m:\n            m = v\n    return m",
+ opts:["It never enters the loop","It returns 0 for an all-negative array",
+       "It is O(n\u00b2) instead of O(n)","It skips the last element"], a:1,
+ ins:["Seeding m with 0 silently assumes at least one non-negative element",
+      "The comparison should be >= instead of >",
+      "The loop should iterate over indices rather than values"], ia:0,
+ why:"For a = [-5, -2, -9] every v > m is false, so it returns 0 \u2014 a value that is not even in the array. Seed with a[0] (and handle the empty case) instead."},
+
+{cat:"Logic gates", d:2,
+ q:"Simplify: A XOR B XOR A",
+ opts:["A","B","0","1"], a:1,
+ ins:["XOR is associative and self-cancelling: A\u2295A = 0 and 0\u2295B = B",
+      "XOR behaves like AND when a term repeats",
+      "Repeating a term always forces the result to 1"], ia:0,
+ why:"XOR is commutative and associative, so regroup as (A\u2295A)\u2295B. A\u2295A = 0, and 0\u2295B = B. This identity is what makes XOR swaps and parity checks work."},
+
+{cat:"Data sufficiency", d:3,
+ q:"Is x > 0?\n  (1) x\u00b2 > 4\n  (2) x\u00b3 > 0",
+ opts:["Statement 1 alone is sufficient","Statement 2 alone is sufficient",
+       "Both together are needed","Neither is sufficient"], a:1,
+ ins:["Even powers destroy sign information; odd powers preserve it",
+      "Any inequality involving x\u00b2 fixes the sign of x",
+      "Two statements are always needed for a sign question"], ia:0,
+ why:"x\u00b2 > 4 is satisfied by x = 3 and by x = \u22123, so (1) cannot settle the sign. Cubing preserves sign, so x\u00b3 > 0 forces x > 0. Statement 2 alone is sufficient."},
+
+{cat:"Odd one out", d:1,
+ q:"Which does not belong?  121, 144, 169, 199, 225",
+ opts:["121","169","199","225"], a:2,
+ ins:["Every other value is a perfect square (11\u00b2, 12\u00b2, 13\u00b2, 15\u00b2)",
+      "Every other value is odd",
+      "Every other value is divisible by 11"], ia:0,
+ why:"121 = 11\u00b2, 144 = 12\u00b2, 169 = 13\u00b2, 225 = 15\u00b2. 199 is prime and not a square."},
+
+{cat:"Analogy", d:2,
+ q:"Binary search : sorted input  ::  hash lookup : ?",
+ opts:["Sorted input","A well-distributed hash function","A linked list","Recursion"], a:1,
+ ins:["The pairing names each technique\u2019s precondition, not its output",
+      "The pairing names each technique\u2019s data structure",
+      "The pairing names each technique\u2019s time complexity"], ia:0,
+ why:"Binary search only gives O(log n) if the input is sorted \u2014 that is its precondition. Hash lookup only gives O(1) if the hash spreads keys evenly; a degenerate hash collapses it to O(n)."},
+
+{cat:"Clocks", d:2,
+ q:"What is the angle between the hands of a clock at 3:30?",
+ opts:["90\u00b0","75\u00b0","80\u00b0","65\u00b0"], a:1,
+ ins:["The hour hand drifts 0.5\u00b0 per minute, so at 3:30 it is 15\u00b0 past the 3",
+      "The hour hand stays fixed on the 3 for the whole hour",
+      "Each minute of the minute hand is worth 5\u00b0"], ia:0,
+ why:"Minute hand at 30 min = 180\u00b0. Hour hand = 3\u00d730 + 0.5\u00d730 = 90 + 15 = 105\u00b0. Difference = 75\u00b0. Forgetting the hour hand\u2019s drift is what produces the trap answer 90\u00b0."},
+
+{cat:"Seating", d:3,
+ q:"P, Q, R, S sit in a row of 4 seats.\n  \u2022 S is at the left end.\n  \u2022 P is not at either end.\n  \u2022 Q sits immediately to P\u2019s right.\n  \u2022 R is not adjacent to S.\nWho is at the right end?",
+ opts:["P","Q","R","Cannot be determined"], a:2,
+ ins:["Fixing S leaves only two slots for the P\u2013Q block, and one breaks the R rule",
+      "P must be in seat 3 because it is the only non-end seat",
+      "R must sit next to Q in every valid arrangement"], ia:0,
+ why:"S takes seat 1. P must be seat 2 or 3. If P=3 then Q=4 and R=2 \u2014 but R would sit next to S, which is banned. So P=2, Q=3, R=4. R is at the right end."},
+
+{cat:"Number theory", d:3,
+ q:"What is the last digit of 7\u00b9\u2070\u2070?",
+ opts:["1","3","7","9"], a:0,
+ ins:["Last digits of powers of 7 cycle 7, 9, 3, 1 with period 4",
+      "Any number raised to a multiple of 10 ends in 0",
+      "The last digit is the remainder of 100 divided by 7"], ia:0,
+ why:"7\u00b9=7, 7\u00b2=49, 7\u00b3=343, 7\u2074=2401 \u2014 last digits cycle 7,9,3,1. 100 mod 4 = 0, which lands on the fourth position of the cycle: 1."},
+
+{cat:"Recursion trace", d:2,
+ q:"What is f(6)?",
+ code:"def f(n):\n    if n <= 1:\n        return 1\n    return n * f(n - 2)",
+ opts:["720","48","120","24"], a:1,
+ ins:["The recursion steps down by 2, so only every other factor appears",
+      "The recursion is plain factorial written with an unusual base case",
+      "The base case returns 1, so the product always collapses to 1"], ia:0,
+ why:"f(6) = 6 \u00d7 f(4) = 6 \u00d7 4 \u00d7 f(2) = 6 \u00d7 4 \u00d7 2 \u00d7 f(0) = 48 \u00d7 1 = 48. This is the double factorial, not 6! = 720."},
+
+{cat:"Complexity", d:2,
+ q:"What is the time complexity?",
+ code:"for i in 1..n:\n    for j in 1..i:\n        work()",
+ opts:["O(n)","O(n log n)","O(n\u00b2)","O(2\u207f)"], a:2,
+ ins:["Total work is 1 + 2 + \u2026 + n = n(n+1)/2, which is \u0398(n\u00b2)",
+      "The inner loop is bounded by a constant, so it is linear",
+      "Each halving of the range gives a log factor"], ia:0,
+ why:"The inner loop runs i times on pass i, so the total is the triangular number n(n+1)/2. Constants drop: O(n\u00b2). Half the work of a full nested loop is still quadratic."},
+
+{cat:"Sets \u2014 Venn", d:1,
+ q:"In a class of 60, 35 play cricket, 25 play chess, and 10 play both. How many play neither?",
+ opts:["0","10","15","20"], a:1,
+ ins:["Inclusion\u2013exclusion: add the sets, then subtract the overlap counted twice",
+      "Add the two sets and subtract from the total",
+      "The overlap should be added, not subtracted"], ia:0,
+ why:"At least one = 35 + 25 \u2212 10 = 50. Neither = 60 \u2212 50 = 10. Skipping the subtraction gives the trap answer 0."},
+
+{cat:"Truth-teller puzzle", d:3,
+ q:"A says: \u201cB is a liar.\u201d  B says: \u201cA and I are the same type.\u201d\n(Truth-tellers always tell the truth; liars always lie.)",
+ opts:["Both are truth-tellers","A is a truth-teller, B is a liar",
+       "A is a liar, B is a truth-teller","Both are liars"], a:1,
+ ins:["Assume B is truthful and derive a contradiction",
+      "Assume A is lying and check B\u2019s statement first",
+      "Both statements can be true at the same time"], ia:0,
+ why:"Suppose B is truthful. Then A and B are the same type, so A is truthful too \u2014 but A said B is a liar, which would be false. Contradiction. So B is a liar. B\u2019s claim is therefore false, meaning they differ in type, so A is a truth-teller \u2014 and A\u2019s statement checks out."},
+
+{cat:"Number puzzle", d:2,
+ q:"The digits of a two-digit number sum to 9. Reversing the digits increases the number by 45. What is the number?",
+ opts:["18","27","36","45"], a:1,
+ ins:["Reversing a two-digit number changes its value by 9 \u00d7 (difference of digits)",
+      "Reversing a number always doubles the tens digit",
+      "The sum of the digits equals the difference of the digits"], ia:0,
+ why:"Let the number be 10x + y with x + y = 9. Reversal gives 10y + x, and (10y + x) \u2212 (10x + y) = 9(y \u2212 x) = 45, so y \u2212 x = 5. Solving with x + y = 9 gives x = 2, y = 7 \u2192 27."},
+
+{cat:"Weighing puzzle", d:3,
+ q:"You have 8 identical-looking balls; one is heavier. With a balance scale, what is the minimum number of weighings that guarantees finding it?",
+ opts:["1","2","3","4"], a:1,
+ ins:["A balance has three outcomes, so one weighing can split the candidates into 3 groups",
+      "A balance has two outcomes, so each weighing halves the candidates",
+      "You must weigh every ball against every other ball"], ia:0,
+ why:"Split 3 / 3 / 2. Weigh the two 3-groups: left heavy, right heavy, or balanced \u2014 three outcomes, each isolating a group. Then one more weighing inside that group finds the ball. Two weighings, guaranteed."},
+
+{cat:"Array bug", d:1,
+ q:"What happens when this runs?",
+ code:"for i in range(len(a)):\n    if a[i] == a[i + 1]:\n        print(\"dup\")",
+ opts:["It works fine","IndexError on the final iteration",
+       "It silently skips the first element","It loops forever"], a:1,
+ ins:["The body reads i + 1 while i already reaches the last valid index",
+      "range() excludes the first element, shifting every access",
+      "Comparing a[i] to a[i+1] is only valid for sorted arrays"], ia:0,
+ why:"range(len(a)) ends at len(a) \u2212 1, so on the last pass a[i+1] indexes len(a) \u2014 out of bounds. The fix is range(len(a) - 1)."},
+
+{cat:"Logical deduction", d:2,
+ q:"\u201cEvery student who passed had studied. Rahul studied.\u201d What follows?",
+ opts:["Rahul passed","Rahul did not pass","Nothing certain about whether Rahul passed","Rahul is not a student"], a:2,
+ ins:["Studying is necessary for passing, but the statement never makes it sufficient",
+      "The statement is reversible, so studying implies passing",
+      "The statement says nothing at all about studying"], ia:0,
+ why:"\u201cPassed \u2192 studied\u201d gives no information when you only know someone studied; that is affirming the consequent. Only the contrapositive is valid: did not study \u2192 did not pass."},
+
+{cat:"Letter series", d:1,
+ q:"AZ, BY, CX, ?",
+ opts:["DV","DW","EW","CW"], a:1,
+ ins:["The first letter steps forward from A while the second steps backward from Z",
+      "Both letters step forward together",
+      "The pair alternates between vowels and consonants"], ia:0,
+ why:"First letters: A, B, C \u2192 D. Second letters: Z, Y, X \u2192 W. So DW."}
+];
+
+var CHARS = [
+ {id:"deducer",  n:"Deducer",  d:"Drops with 1 Hint + 1 Fifty-fifty",          hp:100},
+ {id:"speedster",n:"Speedster",d:"+30% time in every zone",                    hp:100},
+ {id:"analyst",  n:"Analyst",  d:"Loot drops far more often (70% vs 45%)",     hp:100},
+ {id:"tank",     n:"Tank",     d:"Starts at 135 HP, soaks bad rounds",         hp:135}
+];
+
+var TIERS = [
+ {n:"BRONZE",  p:0,    c:"#c58b52"},
+ {n:"SILVER",  p:1500, c:"#b9c3d4"},
+ {n:"GOLD",    p:4000, c:"#f2c14e"},
+ {n:"PLATINUM",p:8000, c:"#7fd4c1"},
+ {n:"DIAMOND", p:14000,c:"#7aa7ff"},
+ {n:"HEROIC",  p:22000,c:"#ff7ae0"}
+];
+
+var ROUNDS = 12, ROUND_TIME = 60, TIME_STEP = 3.2, MIN_TIME = 22;
+var WRONG_DMG = 30, TIMEOUT_DMG = 40, STORM_FROM = 7, STORM_DMG = 6;
+
+var S = null, timer = null;
+
+/* ---------------- helpers ---------------- */
+function $(id){ return document.getElementById(id); }
+function show(id){
+  var ss = document.querySelectorAll(".screen");
+  for (var i = 0; i < ss.length; i++) ss[i].classList.remove("on");
+  $(id).classList.add("on");
+  window.scrollTo(0, 0);
+}
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function shuffle(a){
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function loadCareer(){
+  try {
+    var raw = localStorage.getItem("logicRoyale");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {points:0, matches:0, wins:0};
+}
+function saveCareer(c){
+  try { localStorage.setItem("logicRoyale", JSON.stringify(c)); } catch (e) {}
+}
+function tierOf(points){
+  var t = TIERS[0];
+  for (var i = 0; i < TIERS.length; i++) if (points >= TIERS[i].p) t = TIERS[i];
+  return t;
+}
+
+function reduceMotion(){
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+/* ---------------- lobby handles + kill feed ---------------- */
+var H1 = ["Ace","Zero","Vyom","Riya","Nova","Kabir","Hex","Neo","Tara","Rudra","Iris","Arjun",
+          "Ghost","Meera","Volt","Dev","Kiro","Ansh","Pixel","Sana","Raze","Om","Blitz","Ira"];
+var H2 = ["_op","X","77","_gg","99","_pro","01","_yt","23","_rx","_47","killer","_ff","08","_ind","_god"];
+
+function makeHandles(n){
+  var out = [], seen = {};
+  while (out.length < n){
+    var h = H1[Math.floor(Math.random()*H1.length)] + H2[Math.floor(Math.random()*H2.length)];
+    if (seen[h]) continue;
+    seen[h] = 1; out.push(h);
+  }
+  return out;
+}
+
+var ZONE_CAUSE = ["fell to the ZONE","ran out of clock","guessed and dropped",
+                  "named the wrong reason","timed out mid-solve","picked the trap option"];
+
+function feed(html, mine){
+  var f = $("feed");
+  var d = document.createElement("div");
+  d.className = "kf" + (mine ? " you" : "");
+  d.innerHTML = html;
+  f.insertBefore(d, f.firstChild);
+  while (f.children.length > 5) f.removeChild(f.lastChild);
+  setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 7000);
+}
+
+function feedKill(name){ feed('<b>YOU</b> ☠ ' + esc(name), true); }
+function feedZone(name){
+  feed(esc(name) + ' <em>' + ZONE_CAUSE[Math.floor(Math.random()*ZONE_CAUSE.length)] + '</em>');
+}
+
+/* ---------------- minimap ---------------- */
+function drawMini(){
+  var c = $("minic"); if (!c || !c.getContext) return;
+  var g = c.getContext("2d"), N = 192, cx = N/2, cy = N/2;
+  g.clearRect(0, 0, N, N);
+
+  g.strokeStyle = "rgba(122,152,214,.14)"; g.lineWidth = 1;
+  g.beginPath();
+  for (var v = 32; v < N; v += 32){ g.moveTo(v, 0); g.lineTo(v, N); g.moveTo(0, v); g.lineTo(N, v); }
+  g.stroke();
+
+  var prog = S ? (S.round - 1) / ROUNDS : 0;
+  var r = (0.44 - 0.30 * prog) * N + 12;
+  var storm = S && S.round >= STORM_FROM;
+
+  g.fillStyle = storm ? "rgba(255,90,50,.10)" : "rgba(34,211,238,.07)";
+  g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.fill();
+  g.strokeStyle = storm ? "rgba(255,138,61,.85)" : "rgba(34,211,238,.75)";
+  g.lineWidth = 2;
+  g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.stroke();
+
+  if (S && S.dots){
+    g.fillStyle = "rgba(226,232,245,.55)";
+    for (var i = 0; i < S.botsAlive && i < S.dots.length; i++){
+      var d = S.dots[i];
+      g.beginPath();
+      g.arc(cx + d.x * r * 0.86, cy + d.y * r * 0.86, 2.4, 0, 6.2832);
+      g.fill();
+    }
+  }
+
+  g.fillStyle = "#ff8a3d";
+  g.beginPath(); g.arc(cx, cy, 4.2, 0, 6.2832); g.fill();
+  g.strokeStyle = "rgba(255,138,61,.5)"; g.lineWidth = 1.5;
+  g.beginPath(); g.arc(cx, cy, 8.5, 0, 6.2832); g.stroke();
+
+  $("minil").textContent = storm ? "Storm · Z" + S.round : "Zone " + (S ? S.round : 1);
+}
+
+/* ---------------- sound (off by default) ---------------- */
+var SFX = {on:false, ctx:null};
+
+function tone(freq, dur, type, vol, delay){
+  if (!SFX.on) return;
+  try {
+    if (!SFX.ctx) SFX.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var t0 = SFX.ctx.currentTime + (delay || 0);
+    var o = SFX.ctx.createOscillator(), g = SFX.ctx.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(SFX.ctx.destination);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  } catch (e) {}
+}
+
+function sfx(kind){
+  if (!SFX.on) return;
+  if (kind === "ok"){ tone(620, .11, "triangle", .07); tone(880, .14, "triangle", .06, .09); }
+  else if (kind === "bad"){ tone(150, .26, "sawtooth", .07); }
+  else if (kind === "hs"){ tone(1400, .07, "square", .05); tone(1900, .07, "square", .04, .06); }
+  else if (kind === "tick"){ tone(420, .07, "square", .05); }
+  else if (kind === "drop"){ tone(220, .34, "sawtooth", .07); tone(440, .3, "triangle", .05, .05); }
+  else if (kind === "loot"){ tone(980, .09, "triangle", .05); tone(1320, .12, "triangle", .045, .08); }
+  else if (kind === "win"){
+    [523, 659, 784, 1046].forEach(function(f, i){ tone(f, .22, "triangle", .07, i * 0.12); });
+  }
+}
+
+/* ---------------- feedback: flash + shake ---------------- */
+function hitFx(){
+  var h = $("hit");
+  h.classList.remove("go"); void h.offsetWidth; h.classList.add("go");
+  if (reduceMotion()) return;
+  var w = document.querySelector(".wrap");
+  w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
+}
+
+/* ---------------- drop sequence ---------------- */
+function dropSequence(done){
+  var el = $("seq"), fired = false, red = reduceMotion();
+  var steps = ["3", "2", "1", "GO"], i = 0, gap = red ? 220 : 600;
+
+  function finishSeq(){
+    if (fired) return; fired = true;
+    el.classList.remove("on"); el.onclick = null;
+    done();
+  }
+  el.onclick = finishSeq;
+  el.classList.add("on");
+  $("seqlead").textContent = "Dropping in";
+  $("seqwho").textContent = S.ch.n + " · 49 hostiles in the lobby · tap to skip";
+
+  (function step(){
+    if (fired) return;
+    var c = $("seqcnt");
+    c.textContent = steps[i];
+    c.style.animation = "none"; void c.offsetWidth; c.style.animation = "";
+    sfx(i === 3 ? "drop" : "tick");
+    i++;
+    setTimeout(i < steps.length ? step : finishSeq, gap);
+  })();
+}
+
+/* ---------------- home ---------------- */
+var picked = "deducer";
+
+function renderChars(){
+  var h = "";
+  for (var i = 0; i < CHARS.length; i++){
+    var c = CHARS[i];
+    h += '<button class="char' + (c.id === picked ? ' sel' : '') + '" data-c="' + c.id + '">' +
+         '<b>' + c.n + '</b><span>' + c.d + '</span></button>';
+  }
+  $("chars").innerHTML = h;
+  var bs = $("chars").querySelectorAll(".char");
+  for (var k = 0; k < bs.length; k++){
+    bs[k].onclick = function(){ picked = this.getAttribute("data-c"); renderChars(); };
+  }
+}
+
+function renderCareer(){
+  var c = loadCareer(), t = tierOf(c.points);
+  $("career").innerHTML = c.matches
+    ? '<span class="rank" style="background:' + t.c + '22;color:' + t.c + '">' + t.n + '</span> ' +
+      c.points + ' pts &middot; ' + c.matches + ' matches &middot; ' + c.wins + ' BOOYAH'
+    : 'No matches yet.';
+}
+
+/* ---------------- match ---------------- */
+function startMatch(){
+  var ch = null;
+  for (var i = 0; i < CHARS.length; i++) if (CHARS[i].id === picked) ch = CHARS[i];
+
+  S = {
+    ch: ch,
+    hp: ch.hp, maxhp: ch.hp,
+    score: 0, round: 0,
+    botsAlive: 49,
+    qs: shuffle(QUESTIONS).slice(0, ROUNDS),
+    log: [],
+    correct: 0, insightHits: 0, headshots: 0,
+    inv: {hint:0, fifty:0, freeze:0, gloo:0, medkit:0},
+    phase: "answer",
+    left: 0, limit: 0, removed: [], usedHint: false,
+    over: false
+  };
+  if (ch.id === "deducer"){ S.inv.hint = 1; S.inv.fifty = 1; }
+
+  S.names = makeHandles(49);
+  S.elims = 0;
+  S.dots = [];
+  for (var d = 0; d < 49; d++){
+    var ang = Math.random() * 6.2832, rad = Math.sqrt(Math.random());
+    S.dots.push({x:Math.cos(ang) * rad, y:Math.sin(ang) * rad});
+  }
+
+  show("game");
+  $("feed").classList.add("on");
+  $("mini").classList.add("on");
+  $("feed").innerHTML = "";
+  drawMini();
+  dropSequence(nextRound);
+}
+
+function nextRound(){
+  if (S.over) return;
+  if (S.round >= ROUNDS || S.botsAlive <= 0) return finish(true);
+
+  S.round++;
+  S.phase = "answer";
+  S.removed = [];
+  S.usedHint = false;
+  S.warned = false;
+  S.q = S.qs[S.round - 1];
+
+  var lim = Math.max(MIN_TIME, ROUND_TIME - (S.round - 1) * TIME_STEP);
+  if (S.ch.id === "speedster") lim *= 1.3;
+  S.limit = Math.round(lim);
+  S.answerLimit = S.limit;
+  S.left = S.limit;
+  S.tStart = Date.now();
+
+  $("toast").innerHTML = "";
+  drawHUD();
+  drawQuestion();
+  drawLoot();
+  runTimer();
+}
+
+function runTimer(){
+  clearInterval(timer);
+  timer = setInterval(function(){
+    S.left -= 0.1;
+    if (S.phase === "answer" && !S.warned && S.left <= S.limit * 0.25){
+      S.warned = true; sfx("tick"); sfx("tick");
+    }
+    if (S.left <= 0){
+      S.left = 0;
+      clearInterval(timer);
+      if (S.phase === "answer") resolveAnswer(-1);
+      else if (S.phase === "insight") resolveInsight(-1);
+      return;
+    }
+    drawClock();
+  }, 100);
+}
+
+function drawClock(){
+  var pct = Math.max(0, (S.left / S.limit) * 100);
+  $("zbar").firstElementChild.style.width = pct + "%";
+  $("ztime").textContent = Math.ceil(S.left) + "s";
+  $("zonewrap").classList.toggle("crit", pct < 30);
+}
+
+function drawHUD(){
+  $("hpv").textContent = Math.max(0, Math.round(S.hp));
+  var pct = Math.max(0, (S.hp / S.maxhp) * 100);
+  $("hpbar").firstElementChild.style.width = pct + "%";
+  $("hpbar").classList.toggle("low", pct <= 35);
+  $("alive").textContent = (S.botsAlive + (S.hp > 0 ? 1 : 0));
+  $("score").textContent = S.score;
+  $("place").textContent = "#" + (S.hp > 0 ? S.botsAlive + 1 : S.botsAlive + 1);
+  $("elims").textContent = S.elims;
+  drawMini();
+  $("zlbl").textContent = "Zone " + S.round + " of " + ROUNDS +
+    (S.round >= STORM_FROM ? "  \u00b7  STORM" : "");
+  if (window.__zone){
+    window.__zone.prog = S.round / ROUNDS;
+    window.__zone.storm = S.round >= STORM_FROM ? 1 : 0;
+  }
+  drawClock();
+}
+
+function drawQuestion(){
+  var q = S.q;
+  $("qmeta").innerHTML =
+    '<span class="tag">' + esc(q.cat) + '</span>' +
+    '<span class="tag d' + q.d + '">' + ["", "EASY", "MEDIUM", "HARD"][q.d] + '</span>' +
+    '<span class="tag">' + S.limit + 's zone</span>';
+  var body = '<div class="q">' + esc(q.q) + '</div>';
+  if (q.code) body += '<pre>' + esc(q.code) + '</pre>';
+  $("qbody").innerHTML = body;
+
+  var h = "", letters = "ABCD";
+  for (var i = 0; i < q.opts.length; i++){
+    h += '<button class="opt" data-i="' + i + '">' +
+         '<span class="key">' + letters[i] + '</span><span>' + esc(q.opts[i]) + '</span></button>';
+  }
+  $("opts").innerHTML = h;
+  bindOpts(resolveAnswer);
+}
+
+function bindOpts(fn){
+  var bs = $("opts").querySelectorAll(".opt");
+  for (var i = 0; i < bs.length; i++){
+    bs[i].onclick = function(){ fn(parseInt(this.getAttribute("data-i"), 10)); };
+  }
+}
+
+function lockOpts(chosen, right){
+  var bs = $("opts").querySelectorAll(".opt");
+  for (var i = 0; i < bs.length; i++){
+    bs[i].disabled = true;
+    if (i === right) bs[i].classList.add("ok");
+    else if (i === chosen) bs[i].classList.add("bad");
+  }
+}
+
+/* ---- loot ---- */
+var LOOT = {
+  hint:   {n:"\uD83D\uDD0E Hint",       d:"reveals the approach",      r:"common"},
+  gloo:   {n:"\uD83E\uDDF1 Gloo wall",  d:"blocks the next damage",    r:"uncommon"},
+  fifty:  {n:"\u2702\uFE0F Fifty-fifty", d:"removes two wrong options", r:"rare"},
+  medkit: {n:"\uD83D\uDC8A Medkit",     d:"+25 HP",                    r:"epic"},
+  freeze: {n:"\u2744\uFE0F Time freeze", d:"+20 seconds",               r:"legendary"}
+};
+
+function drawLoot(){
+  var h = "", any = false;
+  for (var k in S.inv){
+    if (!S.inv[k]) continue;
+    any = true;
+    var usable = (S.phase === "answer") || k === "medkit" || k === "gloo";
+    h += '<button class="item" data-r="' + LOOT[k].r + '" data-k="' + k + '"' +
+         (usable ? "" : " disabled") + '>' + LOOT[k].n + ' \u00d7' + S.inv[k] + '</button>';
+  }
+  $("lootbar").innerHTML = any ? h : '<span style="color:var(--dim);font-size:12.5px">No loot yet \u2014 solve clean to earn drops.</span>';
+  var bs = $("lootbar").querySelectorAll(".item");
+  for (var i = 0; i < bs.length; i++){
+    bs[i].onclick = function(){ useLoot(this.getAttribute("data-k")); };
+  }
+}
+
+function useLoot(k){
+  if (!S.inv[k]) return;
+  if (k === "hint"){
+    if (S.phase !== "answer") return;
+    S.inv.hint--; S.usedHint = true;
+    toast("info", "<b>Hint:</b> " + esc(S.q.ins[S.q.ia]));
+  } else if (k === "fifty"){
+    if (S.phase !== "answer") return;
+    S.inv.fifty--;
+    var wrong = [];
+    for (var i = 0; i < S.q.opts.length; i++) if (i !== S.q.a) wrong.push(i);
+    wrong = shuffle(wrong).slice(0, 2);
+    var bs = $("opts").querySelectorAll(".opt");
+    for (var j = 0; j < wrong.length; j++) bs[wrong[j]].classList.add("gone");
+    toast("info", "Two wrong options burned.");
+  } else if (k === "freeze"){
+    if (S.phase !== "answer") return;
+    S.inv.freeze--; S.left += 20; S.limit = Math.max(S.limit, S.left);
+    toast("info", "Zone frozen. +20 seconds.");
+  } else if (k === "gloo"){
+    S.inv.gloo--; S.shield = true;
+    toast("info", "Gloo wall up \u2014 the next hit is blocked.");
+  } else if (k === "medkit"){
+    S.inv.medkit--; S.hp = Math.min(S.maxhp, S.hp + 25);
+    toast("info", "Medkit used. +25 HP.");
+  }
+  drawHUD(); drawLoot();
+}
+
+function toast(kind, html){
+  $("toast").innerHTML = '<div class="toast ' + kind + '">' + html + '</div>';
+}
+
+function damage(n, why){
+  if (S.shield){ S.shield = false; toast("info", "Gloo wall absorbed " + n + " damage."); return; }
+  S.hp -= n;
+  if (S.hp < 0) S.hp = 0;
+}
+
+/* ---- phase 1: the answer ---- */
+function resolveAnswer(chosen){
+  if (S.phase !== "answer") return;
+  clearInterval(timer);
+  S.phase = "locked";
+
+  var q = S.q;
+  var used = (Date.now() - S.tStart) / 1000;
+  var right = (chosen === q.a);
+  var timedOut = (chosen === -1);
+
+  lockOpts(chosen, q.a);
+  S.entry = {q:q, chosen:chosen, right:right, time:used, insChosen:-1, insRight:false, hint:S.usedHint};
+
+  if (right){
+    S.correct++;
+    var headshot = used <= S.limit * 0.4;
+    if (headshot) S.headshots++;
+    S.entry.headshot = headshot;
+    sfx(headshot ? "hs" : "ok");
+    var msg = "<b>Correct.</b> Locked in " + used.toFixed(1) + "s.";
+    if (headshot) msg += " <b>HEADSHOT</b> \u2014 2 extra bots down.";
+    msg += "<br>Now name the key insight to bank the multiplier.";
+    toast("ok", msg);
+    setTimeout(askInsight, 900);
+  } else {
+    var dmg = timedOut ? TIMEOUT_DMG : WRONG_DMG;
+    damage(dmg);
+    sfx("bad"); hitFx();
+    toast("bad", (timedOut ? "<b>Zone closed on you.</b> \u2212" : "<b>Wrong.</b> \u2212") + dmg + " HP.<br>" +
+                 "<b>Correct:</b> " + esc(q.opts[q.a]) + "<br><span style=\"color:#cfd8ea\">" + esc(q.why) + "</span>");
+    S.log.push(S.entry);
+    drawHUD(); drawLoot();
+    setTimeout(endRound, 2600);
+  }
+}
+
+/* ---- phase 2: the insight (the anti-guess gate) ---- */
+function askInsight(){
+  if (S.over) return;
+  S.phase = "insight";
+  S.left = 18; S.limit = 18;
+  var q = S.q;
+
+  $("qmeta").innerHTML = '<span class="tag" style="color:var(--acc2)">KEY INSIGHT</span>' +
+                         '<span class="tag">1.6\u00d7 score</span>';
+  $("qbody").innerHTML = '<div class="q">Which statement is the reason your answer is right?</div>';
+
+  var order = shuffle([0, 1, 2]);
+  S.insOrder = order;
+  var h = "", letters = "ABC";
+  for (var i = 0; i < order.length; i++){
+    h += '<button class="opt" data-i="' + i + '"><span class="key">' + letters[i] + '</span>' +
+         '<span>' + esc(q.ins[order[i]]) + '</span></button>';
+  }
+  $("opts").innerHTML = h;
+  bindOpts(resolveInsight);
+  drawLoot();
+  runTimer();
+}
+
+function resolveInsight(pos){
+  if (S.phase !== "insight") return;
+  clearInterval(timer);
+  S.phase = "locked";
+
+  var q = S.q;
+  var realPos = S.insOrder.indexOf(q.ia);
+  var hit = (pos === realPos);
+
+  lockOpts(pos, realPos);
+
+  var used = S.entry.time;
+  var speed = 1 + Math.max(0, (1 - used / Math.max(1, S.answerLimit))) * 0.5;
+  var base = 100 * q.d;
+  var pts = Math.round(base * (hit ? 1.6 : 1) * speed);
+  if (S.entry.hint) pts = Math.round(pts * 0.7);
+  S.score += pts;
+
+  S.entry.insChosen = (pos === -1 ? -1 : S.insOrder[pos]);
+  S.entry.insRight = hit;
+  S.entry.pts = pts;
+  S.log.push(S.entry);
+
+  if (hit) S.insightHits++;
+
+  toast(hit ? "ok" : "bad",
+    (hit ? "<b>Insight locked.</b> 1.6\u00d7 banked. " : "<b>Right answer, wrong reason.</b> No multiplier. ") +
+    "+" + pts + " pts<br><span style=\"color:#cfd8ea\">" + esc(q.why) + "</span>");
+
+  // headshot + correct answer thins the lobby harder
+  var kills = Math.min(S.botsAlive, 1 + (S.entry.headshot ? 2 : 0) + (hit ? 1 : 0));
+  for (var k = 0; k < kills; k++){
+    var victim = S.names.pop();
+    if (victim) feedKill(victim);
+  }
+  S.botsAlive -= kills;
+  S.elims += kills;
+
+  drawHUD(); drawLoot();
+  setTimeout(endRound, 2800);
+}
+
+/* ---- end of round: storm, bots, loot ---- */
+function endRound(){
+  if (S.over) return;
+
+  if (S.round >= STORM_FROM && S.hp > 0){
+    damage(STORM_DMG);
+  }
+
+  // bot attrition rises every round
+  var p = 0.10 + 0.05 * S.round;
+  var dead = 0;
+  for (var i = 0; i < S.botsAlive; i++) if (Math.random() < p) dead++;
+  S.botsAlive = Math.max(0, S.botsAlive - dead);
+  if (S.round >= 10 && S.botsAlive > 3) S.botsAlive = 3;
+  if (S.round >= ROUNDS) S.botsAlive = 0;
+
+  for (var f = 0; f < Math.min(dead, 3); f++){
+    var gone = S.names.pop();
+    if (gone) feedZone(gone);
+  }
+
+  // loot drop on a clean solve
+  if (S.entry && S.entry.right){
+    var chance = (S.ch.id === "analyst") ? 0.70 : 0.45;
+    if (Math.random() < chance){
+      var keys = ["hint", "fifty", "freeze", "gloo", "medkit"];
+      var k = keys[Math.floor(Math.random() * keys.length)];
+      S.inv[k]++;
+      sfx("loot");
+      var prev = $("toast").innerHTML;
+      $("toast").innerHTML = prev +
+        '<div class="toast info">\uD83D\uDCE6 Loot drop: <b style="color:var(--r-' + LOOT[k].r + ')">' +
+        LOOT[k].n + '</b> <span style="color:var(--r-' + LOOT[k].r + ')">[' + LOOT[k].r.toUpperCase() +
+        ']</span> \u2014 ' + LOOT[k].d + '</div>';
+    }
+  }
+
+  drawHUD(); drawLoot();
+
+  if (S.hp <= 0) return finish(false);
+  setTimeout(nextRound, 700);
+}
+
+/* ---------------- results ---------------- */
+function finish(alive){
+  S.over = true;
+  clearInterval(timer);
+  $("feed").classList.remove("on");
+  $("mini").classList.remove("on");
+
+  var won = alive && S.hp > 0;
+  sfx(won ? "win" : "bad");
+  var place = won ? 1 : S.botsAlive + 1;
+
+  var c = loadCareer();
+  c.points += S.score;
+  c.matches++;
+  if (won) c.wins++;
+  saveCareer(c);
+  var t = tierOf(c.points);
+
+  $("verdict").className = "big" + (reduceMotion() ? "" : " slam");
+  $("verdict").innerHTML = won
+    ? '<span class="booyah">BOOYAH!</span>'
+    : 'ELIMINATED';
+  $("verdictsub").textContent = won
+    ? "Last operator standing. You out-reasoned the lobby \u2014 and you named why, not just what."
+    : (S.hp <= 0 ? "The zone caught you. Read the replay below \u2014 the reasoning is where the rank comes from."
+                 : "Match over.");
+
+  $("rplace").textContent = "#" + place;
+  $("rscore").textContent = S.score;
+  $("racc").textContent = S.correct + "/" + S.log.length;
+  $("rins").textContent = S.insightHits + "/" + S.correct;
+  $("rhs").textContent = S.headshots;
+  $("rrank").innerHTML = '<span class="rank" style="background:' + t.c + '22;color:' + t.c + '">' +
+                         t.n + '</span> <span style="font-size:13px;color:var(--dim)">' + c.points + ' pts</span>';
+
+  buildReplay();
+  show("result");
+}
+
+function buildReplay(){
+  var h = "";
+  for (var i = 0; i < S.log.length; i++){
+    var e = S.log[i], q = e.q;
+    var yours = e.chosen === -1 ? "no answer (timed out)" : q.opts[e.chosen];
+    h += '<div class="rep">' +
+      '<div class="rq"><span class="dot ' + (e.right ? "ok" : "bad") + '"></span>' +
+      'Zone ' + (i + 1) + ' \u00b7 ' + esc(q.cat) + '</div>' +
+      '<div class="line" style="margin-top:8px">' + esc(q.q).replace(/\n/g, "<br>") + '</div>' +
+      (q.code ? '<pre>' + esc(q.code) + '</pre>' : '') +
+      '<div class="line">You answered <b>' + esc(yours) + '</b> \u00b7 correct answer <b>' + esc(q.opts[q.a]) + '</b>' +
+      (e.right ? ' \u00b7 ' + e.time.toFixed(1) + 's' : '') + '</div>';
+
+    if (e.right){
+      h += '<div class="line">Key insight: <b style="color:' + (e.insRight ? "var(--ok)" : "var(--bad)") + '">' +
+           (e.insRight ? "named correctly" : (e.insChosen === -1 ? "not named in time" : "named wrongly")) +
+           '</b> \u00b7 +' + (e.pts || 0) + ' pts</div>';
+    }
+    h += '<div class="why"><b>Why:</b> ' + esc(q.why) + '<br><br><b>The move to remember:</b> ' + esc(q.ins[q.ia]) + '</div>';
+    h += '</div>';
+  }
+  $("replaybody").innerHTML = h || '<p class="sub">No rounds played.</p>';
+}
+
+/* ---------------- wiring ---------------- */
+function goHome(){
+  show("home"); renderCareer();
+  $("feed").classList.remove("on");
+  $("mini").classList.remove("on");
+  if (window.__zone){ window.__zone.prog = 0.06; window.__zone.storm = 0; }
+}
+$("sfx").onclick = function(){
+  SFX.on = !SFX.on;
+  this.classList.toggle("on", SFX.on);
+  this.textContent = SFX.on ? "Sound on" : "Sound off";
+  if (SFX.on) sfx("tick");
+};
+$("drop").onclick    = startMatch;
+$("again").onclick   = goHome;
+$("again2").onclick  = goHome;
+$("toreplay").onclick= function(){ show("replay"); };
+$("backres").onclick = function(){ show("result"); };
+
+document.addEventListener("keydown", function(ev){
+  if (!$("game").classList.contains("on")) return;
+  var k = ev.key.toUpperCase();
+  var idx = "ABCD".indexOf(k);
+  if (idx < 0) return;
+  var bs = $("opts").querySelectorAll(".opt");
+  if (bs[idx] && !bs[idx].disabled && !bs[idx].classList.contains("gone")) bs[idx].click();
+});
+
+/* ---------------- background: live tactical map ----------------
+   Not decoration: the safe-zone ring on the map is the same zone the
+   match is closing. It contracts with S.round and turns red in the storm.
+----------------------------------------------------------------- */
+(function bgfx(){
+  var cv = $("bgfx"); if (!cv || !cv.getContext) return;
+  var x = cv.getContext("2d");
+  var W = 0, H = 0, DPR = 1, dust = [], drawn = false;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var Z = {prog:0.06, storm:0, cur:0.06};
+  window.__zone = Z;
+
+  function size(){
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.max(1, Math.round(W * DPR));
+    cv.height = Math.max(1, Math.round(H * DPR));
+    x.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dust = [];
+    var n = Math.max(18, Math.min(55, Math.round(W * H / 24000)));
+    for (var i = 0; i < n; i++){
+      dust.push({x:Math.random()*W, y:Math.random()*H,
+                 r:Math.random()*1.5+0.35, v:Math.random()*0.22+0.05,
+                 a:Math.random()*0.32+0.08, p:Math.random()*6.28});
+    }
+    drawn = false;
+  }
+  window.addEventListener("resize", size);
+
+  function grid(t){
+    var step = 46, off = reduce ? 0 : (t * 5) % step;
+    x.lineWidth = 1;
+    x.strokeStyle = "rgba(122,152,214,.055)";
+    x.beginPath();
+    for (var gx = -step + off; gx < W + step; gx += step){ x.moveTo(gx, 0); x.lineTo(gx, H); }
+    for (var gy = -step + off; gy < H + step; gy += step){ x.moveTo(0, gy); x.lineTo(W, gy); }
+    x.stroke();
+  }
+
+  function contours(t, cx, cy){
+    var base = Math.min(W, H) * 0.30;
+    for (var k = 0; k < 4; k++){
+      var rad = base + k * Math.min(W, H) * 0.115;
+      x.beginPath();
+      for (var a = 0; a <= 6.2832; a += 0.10){
+        var wob = Math.sin(a * 3 + k * 1.7 + t * 0.12) * 13 +
+                  Math.sin(a * 5 - k * 0.9 - t * 0.08) * 7;
+        var px = cx + Math.cos(a) * (rad + wob);
+        var py = cy + Math.sin(a) * (rad + wob) * 0.78;
+        if (a === 0) x.moveTo(px, py); else x.lineTo(px, py);
+      }
+      x.closePath();
+      x.strokeStyle = "rgba(34,211,238," + (0.055 - k * 0.009) + ")";
+      x.lineWidth = 1;
+      x.stroke();
+    }
+  }
+
+  function safeZone(t, cx, cy){
+    var minD = Math.min(W, H);
+    var r = (0.92 - 0.70 * Z.cur) * minD * 0.60;
+    var hot = Z.storm;
+
+    // danger wash outside the ring
+    var g = x.createRadialGradient(cx, cy, r, cx, cy, r + minD * 0.95);
+    g.addColorStop(0, "rgba(255,72,44,0)");
+    g.addColorStop(1, "rgba(255,72,44," + (0.05 + 0.10 * hot) + ")");
+    x.fillStyle = g;
+    x.fillRect(0, 0, W, H);
+
+    var ring = hot ? "255,138,61" : "34,211,238";
+    var pulse = reduce ? 0.5 : 0.5 + Math.sin(t * 1.6) * 0.18;
+
+    x.beginPath(); x.arc(cx, cy, r, 0, 6.2832);
+    x.strokeStyle = "rgba(" + ring + "," + (0.16 + pulse * 0.13) + ")";
+    x.lineWidth = 1.6; x.stroke();
+
+    x.save();
+    x.setLineDash([9, 13]);
+    x.lineDashOffset = reduce ? 0 : -t * 16;
+    x.beginPath(); x.arc(cx, cy, r + 9, 0, 6.2832);
+    x.strokeStyle = "rgba(" + ring + ",.12)";
+    x.lineWidth = 1; x.stroke();
+    x.restore();
+
+    // crosshair ticks on the ring
+    x.strokeStyle = "rgba(" + ring + ",.22)";
+    x.lineWidth = 1.4;
+    for (var i = 0; i < 4; i++){
+      var a = i * 1.5708 + (reduce ? 0 : t * 0.10);
+      x.beginPath();
+      x.moveTo(cx + Math.cos(a) * (r - 7), cy + Math.sin(a) * (r - 7));
+      x.lineTo(cx + Math.cos(a) * (r + 7), cy + Math.sin(a) * (r + 7));
+      x.stroke();
+    }
+  }
+
+  function motes(t){
+    for (var i = 0; i < dust.length; i++){
+      var d = dust[i];
+      if (!reduce){
+        d.y -= d.v;
+        d.x += Math.sin(t * 0.5 + d.p) * 0.18;
+        if (d.y < -4){ d.y = H + 4; d.x = Math.random() * W; }
+      }
+      x.beginPath();
+      x.arc(d.x, d.y, d.r, 0, 6.2832);
+      x.fillStyle = "rgba(190,214,255," + d.a * 0.5 + ")";
+      x.fill();
+    }
+  }
+
+  function vignette(){
+    var g = x.createRadialGradient(W * 0.5, H * 0.38, Math.min(W, H) * 0.25,
+                                   W * 0.5, H * 0.5, Math.max(W, H) * 0.82);
+    g.addColorStop(0, "rgba(11,15,23,0)");
+    g.addColorStop(1, "rgba(7,10,17,.72)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, W, H);
+  }
+
+  var last = 0;
+  function frame(now){
+    requestAnimationFrame(frame);
+    if (now - last < 33) return;
+    last = now;
+
+    var settled = Math.abs(Z.prog - Z.cur) < 0.0015;
+    if (reduce && drawn && settled) return;
+    Z.cur += (Z.prog - Z.cur) * 0.07;
+    if (settled) Z.cur = Z.prog;
+
+    var t = reduce ? 0 : now / 1000;
+    var cx = W * 0.5, cy = H * 0.40;
+
+    x.clearRect(0, 0, W, H);
+    grid(t);
+    contours(t, cx, cy);
+    safeZone(t, cx, cy);
+    motes(t);
+    vignette();
+    drawn = true;
+  }
+
+  size();
+  requestAnimationFrame(frame);
+})();
+
+renderChars();
+renderCareer();
+</script>
+</body>
+</html>
