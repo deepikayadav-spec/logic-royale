@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Logic Royale</title>
+<meta name="theme-color" content="#0a0512">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Logic Royale">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,600;10..48,800&family=Outfit:wght@400;500;600;700;800&display=swap">
 <style>
@@ -248,6 +256,64 @@ pre{background:#12071f;border:2px solid var(--line);border-radius:14px;padding:1
 @keyframes slam{0%{transform:scale(2.2);opacity:0}60%{transform:scale(.94)}100%{transform:none;opacity:1}}
 
 @media(max-width:520px){.grid3{grid-template-columns:1fr}}
+
+/* ================= touch + mobile ================= */
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none}
+.btn,.sfx,.opt,.item,.char{touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none}
+.kbd-hint{display:none}
+@media (hover:hover) and (pointer:fine){.kbd-hint{display:inline}}
+
+/* touch devices: no sticky hover states, real press feedback instead */
+@media (hover:none){
+  .btn:hover,.char:hover,.opt:hover:not(:disabled),.item:hover:not(:disabled){transform:none}
+  .btn:hover{box-shadow:0 0 0 2px rgba(212,255,63,.25),0 8px 24px rgba(212,255,63,.18)}
+  .btn:active{transform:scale(.97)}
+  .opt:active:not(:disabled){background:#20123a;border-color:var(--vio);transform:scale(.99)}
+  .char:active{border-color:var(--vio)}
+  .item:active:not(:disabled){transform:scale(.96)}
+  .opt:hover:not(:disabled){background:var(--ink2);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--line);color:var(--tx)}
+}
+
+@media(max-width:620px){
+  .wrap{padding-block:12px 100px}          /* clears the fixed feed + minimap */
+  h1{font-size:clamp(38px,13.5vw,62px)}
+  .sub{font-size:15px}
+  .card{padding:15px;border-radius:17px}
+  .q{font-size:17px}
+  .opt{padding:15px 14px;font-size:16px;border-radius:13px}   /* 48px+ tap target */
+  .opt .key{flex:0 0 28px;height:28px;font-size:14px}
+  .btn{padding:15px 24px;min-height:52px;font-size:16px}
+  .sfx{min-height:44px;padding:10px 16px}
+  .item{padding:11px 15px;font-size:13.5px;min-height:44px}
+  .stat{padding:10px 12px}
+  .stat .v{font-size:23px}
+  .hud{grid-template-columns:1fr 1fr}
+  .hud .stat:first-child{grid-column:1 / -1}
+  .combo{padding:8px 12px;font-size:12.5px;gap:8px}
+  .combo .mult{font-size:17px}
+  .sticker{font-size:10.5px;padding:4px 9px}
+  .foot{font-size:13px}
+  /* kill feed moves bottom-left, minimap stays bottom-right, no collision */
+  #feed{top:auto;left:10px;right:auto;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100vw - 110px)}
+  #feed .kf:nth-child(n+4){display:none}
+  .kf{font-size:11px;padding:5px 9px}
+  #mini{width:68px}
+  #mini canvas{width:68px;height:68px}
+  .mini-l{font-size:9px;letter-spacing:.1em;padding:3px 0}
+}
+
+/* phone in landscape: reclaim vertical space */
+@media(max-height:540px) and (orientation:landscape){
+  h1{font-size:34px}
+  .marq{display:none}
+  .wrap{padding-block:10px 88px}
+  #seq .cnt{font-size:72px}
+}
+
 @media (prefers-reduced-motion: reduce){
   .shake,#seq .cnt,.slam,.kf,.bp,.marq div{animation:none!important}
   #hit.go{animation-duration:.2s}
@@ -293,13 +359,14 @@ pre{background:#12071f;border:2px solid var(--line);border-radius:14px;padding:1
       &bull; Got it right? Now name the <b>key insight</b>. Nail it = <b>1.6&times;</b>. Miss it = you got lucky, and the game knows.<br>
       &bull; Answer in the first 40% of the clock = <b>headshot</b>, two extra down.<br>
       &bull; Chain correct answers for a <b>streak multiplier</b> up to <b>3&times;</b>. One wrong and it's gone.<br>
-      &bull; Last one standing gets BOOYAH.
+      &bull; Last one standing gets BOOYAH.<span class="kbd-hint"><br>&bull; Keyboard: <b>A B C D</b> to answer.</span>
     </div>
   </div>
 
   <div class="row mt">
     <button class="btn" id="drop">Drop in</button>
     <button class="sfx" id="sfx">Sound off</button>
+    <button class="sfx" id="install" hidden>Install app</button>
     <span id="career" class="foot" style="margin-top:0"></span>
   </div>
 </section>
@@ -802,9 +869,14 @@ function sfx(kind){
 }
 
 /* ---------------- feedback: flash + shake ---------------- */
+function buzz(pattern){
+  try { if (navigator.vibrate && !reduceMotion()) navigator.vibrate(pattern); } catch (e) {}
+}
+
 function hitFx(){
   var h = $("hit");
   h.classList.remove("go"); void h.offsetWidth; h.classList.add("go");
+  buzz([45, 55, 45]);
   if (reduceMotion()) return;
   var w = document.querySelector(".wrap");
   w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
@@ -1090,6 +1162,7 @@ function resolveAnswer(chosen){
     S.entry.headshot = headshot;
     sfx(headshot ? "hs" : "ok");
     burst(headshot ? ["\ud83c\udfaf","\u26a1","\ud83d\udd25"] : ["\ud83d\udd25","\ud83d\udcaf","\u2705"]);
+    buzz(headshot ? [18, 40, 18, 40, 30] : 22);
     drawCombo();
 
     var msg = headshot ? "<b>Headshot.</b> " + used.toFixed(1) + "s \u2014 two extra down."
@@ -1316,8 +1389,30 @@ $("sfx").onclick = function(){
   SFX.on = !SFX.on;
   this.classList.toggle("on", SFX.on);
   this.textContent = SFX.on ? "Sound on" : "Sound off";
-  if (SFX.on) sfx("tick");
+  if (SFX.on){
+    // iOS/Android need the context created and resumed inside a user gesture
+    try {
+      if (!SFX.ctx) SFX.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (SFX.ctx.state === "suspended") SFX.ctx.resume();
+    } catch (e) {}
+    sfx("tick");
+  }
 };
+
+/* install to home screen (Chrome/Edge Android) */
+var deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", function(ev){
+  ev.preventDefault();
+  deferredPrompt = ev;
+  $("install").hidden = false;
+});
+$("install").onclick = function(){
+  if (!deferredPrompt) return;
+  var btn = this;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){ deferredPrompt = null; btn.hidden = true; });
+};
+window.addEventListener("appinstalled", function(){ $("install").hidden = true; });
 $("drop").onclick    = startMatch;
 $("again").onclick   = goHome;
 $("again2").onclick  = goHome;

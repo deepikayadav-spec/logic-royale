@@ -1,0 +1,16 @@
+{
+  "name": "Logic Royale",
+  "short_name": "Logic Royale",
+  "description": "Battle-royale reasoning game. 12 shrinking zones, and a right answer only counts if you can name why.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0512",
+  "theme_color": "#0a0512",
+  "categories": ["education", "games"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
